@@ -1,0 +1,36 @@
+{
+  "name": "rukawa",
+  "version": "0.0.1",
+  "description": "react data stream",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "scripts": {
+    "dev": "father dev",
+    "build": "father build",
+    "build:deps": "father prebundle",
+    "prepublishOnly": "father doctor && npm run build"
+  },
+  "keywords": [],
+  "authors": [
+    "lyy(m18758428901@163.com)"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist",
+    "compiled"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0"
+  },
+  "devDependencies": {
+    "father": "^4.1.8",
+    "styled-components": "^5.3.9",
+    "webpack": "^5.78.0"
+  },
+  "dependencies": {
+    "rxjs": "^7.8.0"
+  }
+}
