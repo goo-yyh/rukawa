@@ -8,7 +8,7 @@ export interface INodeProps<T> {
 
 class Rukawa {
   rukawaMap: Record<string, RukawaNode<unknown>> = {};
-  stream: Subject<Record<string, unknown>> = new Subject();
+  stream: Subject<{ name: string; value: unknown }> = new Subject();
   createNode(data: INodeProps<unknown>) {
     const { name } = data;
     if (this.rukawaMap[name]) {
@@ -19,6 +19,7 @@ class Rukawa {
   }
 
   deleteNode(name: string) {
+    console.log('delete node', name);
     if (this.rukawaMap[name]) {
       Reflect.deleteProperty(this.rukawaMap, name);
     }
@@ -29,7 +30,6 @@ class Rukawa {
     names.forEach(name => {
       const node = this.rukawaMap[name];
       if (!node) {
-        console.warn(`不存在 name 为 ${name} 的节点, 请检查代码`);
         return;
       }
       values[name] = node.getValue()
@@ -43,7 +43,8 @@ export const getRukawa = () => {
   if (rukawa) {
     return rukawa;
   }
-  return new Rukawa();
+  rukawa = new Rukawa();
+  return rukawa;
 }
 
 

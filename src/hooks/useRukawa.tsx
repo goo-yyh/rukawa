@@ -2,15 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { getRukawa } from "../rukawa";
 import { INodeProps } from "../rukawa";
 
-export const useRukawa = ({ name, subscribes = [], initialValue }: INodeProps<unknown>) => {
+export const useRukawa = ({ name, subscribes, initialValue }: INodeProps<unknown>) => {
   const rukawa = getRukawa();
-  rukawa.createNode({
-    name,
-    subscribes,
-    initialValue
-  });
   const [values, setValues] =
-    useState<Record<string, unknown>>(rukawa.getNodeValues(subscribes));
+    useState<Record<string, unknown>>(rukawa.getNodeValues(subscribes || []));
 
   useEffect(() => {
     rukawa.createNode({
@@ -19,15 +14,20 @@ export const useRukawa = ({ name, subscribes = [], initialValue }: INodeProps<un
       initialValue
     })
     // 无订阅
-    if (!subscribes.length) {
-      return () => {}
+    if (!subscribes?.length) {
+      return () => {
+        rukawa.deleteNode(name);
+      }
     }
 
-    const subscription = rukawa.stream.subscribe((val: Record<string, unknown>) => {
-      setValues(values => ({
-        ...values,
-          val
-      }));
+    const subscription = rukawa.stream.subscribe((val) => {
+      const { name, value } = val;
+      if (subscribes.includes(name)) {
+        setValues(values => ({
+          ...values,
+          [name]: value
+        }));
+      }
     })
     return () => {
       rukawa.deleteNode(name);
@@ -35,12 +35,10 @@ export const useRukawa = ({ name, subscribes = [], initialValue }: INodeProps<un
     }
   }, [name, subscribes]);
 
-  const node = useMemo(() => {
-    return rukawa.rukawaMap[name];
-  }, [name])
-
   return {
     rukawaValues: values,
-    setRukawaValue: node.setValue
+    setRukawaValue: (val: unknown) => {
+      rukawa.rukawaMap[name].setValue(val)
+    }
   }
 }

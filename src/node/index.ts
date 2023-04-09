@@ -6,9 +6,9 @@ export class RukawaNode<T> {
   _value: unknown;
   subscribes: string[];
   name: string;
-  subject: Subject<Record<string, unknown>>;
+  subject: Subject<{ name: string; value: unknown }>;
   id: number;
-  constructor(data: INodeProps<T>, subject: Subject<Record<string, unknown>>) {
+  constructor(data: INodeProps<T>, subject: Subject<{ name: string; value: unknown }>) {
     this._value = data.initialValue;
     this.subscribes = data.subscribes || [];
     this.name = data.name;

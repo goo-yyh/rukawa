@@ -1,6 +1,6 @@
 {
   "name": "rukawa",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "react data stream",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
@@ -10,7 +10,11 @@
     "build:deps": "father prebundle",
     "prepublishOnly": "father doctor && npm run build"
   },
-  "keywords": [],
+  "keywords": [
+    "react",
+    "rukawa",
+    "state"
+  ],
   "authors": [
     "lyy(m18758428901@163.com)"
   ],
