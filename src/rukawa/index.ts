@@ -19,7 +19,6 @@ class Rukawa {
   }
 
   deleteNode(name: string) {
-    console.log('delete node', name);
     if (this.rukawaMap[name]) {
       Reflect.deleteProperty(this.rukawaMap, name);
     }

@@ -6,17 +6,29 @@
 ## Install
 
 ```bash
-$ pnpm install
+$ npm install rukawa
 ```
 
-```bash
-$ npm run dev
-$ npm run build
+## use
+
+```typescript jsx
+import { useRukawa } from 'rukawa';
+
+const {
+  rukawaValues,
+  setRukawaValue
+} = useRukawa({
+  name: 'test',
+  subscribes: [
+    'test-1'
+  ],
+  initialValue: ''
+})
 ```
 
-## Options
-
-TODO
+提供一个 `useRukawa` 的 `hook`，可以从中导出 `rukawaValues` 和 `setRukawaValue`,
+`rukawaValues` 是订阅的节点的 `values` 集合, `setRukawaValue` 是更改当前节点的值,
+更改后，订阅该值的节点中的 `rukawaValues`, 会获取到最新的值。
 
 ## LICENSE
 
