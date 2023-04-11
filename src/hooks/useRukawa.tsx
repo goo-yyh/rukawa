@@ -1,18 +1,22 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getRukawa } from "../rukawa";
 import { INodeProps } from "../rukawa";
 
 export const useRukawa = ({ name, subscribes, initialValue }: INodeProps<unknown>) => {
   const rukawa = getRukawa();
-  const [values, setValues] =
-    useState<Record<string, unknown>>(rukawa.getNodeValues(subscribes || []));
+  const nodeValues = rukawa.getNodeValues(subscribes || []);
+  const [values, setValues] = useState(nodeValues);
+  const currentValues = useRef(nodeValues);
 
   useEffect(() => {
-    rukawa.createNode({
+    const node = rukawa.createNode({
       name,
       subscribes,
       initialValue
     })
+    if (initialValue !== undefined) {
+      node.setValue(initialValue);
+    }
     // 无订阅
     if (!subscribes?.length) {
       return () => {

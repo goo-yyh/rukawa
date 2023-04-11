@@ -16,6 +16,7 @@ class Rukawa {
     }
 
     this.rukawaMap[name] = new RukawaNode<unknown>(data, this.stream);
+    return this.rukawaMap[name];
   }
 
   deleteNode(name: string) {
