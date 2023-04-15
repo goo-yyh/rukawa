@@ -2,23 +2,23 @@ import { Subject } from "rxjs";
 import { INodeProps } from "../rukawa";
 
 let id = 0;
-export class RukawaNode<T> {
-  _value: unknown;
+export class RukawaNode<T = unknown> {
+  _value: T | undefined;
   subscribes: string[];
   name: string;
-  subject: Subject<{ name: string; value: unknown }>;
+  setRukawaValue: (data: { name: string, value: T }) => void;
   id: number;
-  constructor(data: INodeProps<T>, subject: Subject<{ name: string; value: unknown }>) {
+  constructor(data: INodeProps<T>, setRukawaValue: (data: { name: string, value: T }) => void) {
     this._value = data.initialValue;
     this.subscribes = data.subscribes || [];
     this.name = data.name;
-    this.subject = subject;
     this.id = ++id;
+    this.setRukawaValue = setRukawaValue;
   }
 
   setValue(value: T) {
     this._value = value;
-    this.subject.next({
+    this.setRukawaValue({
       name: this.name,
       value: value
     })

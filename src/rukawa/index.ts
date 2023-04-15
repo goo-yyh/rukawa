@@ -15,8 +15,12 @@ class Rukawa {
       throw new Error(`rukawa 中已存在 name 为 ${name} 的节点`);
     }
 
-    this.rukawaMap[name] = new RukawaNode<unknown>(data, this.stream);
+    this.rukawaMap[name] = new RukawaNode<unknown>(data, this.setNodeValue);
     return this.rukawaMap[name];
+  }
+
+  setNodeValue(data: { name: string, value: unknown }) {
+    this.stream.next(data);
   }
 
   deleteNode(name: string) {

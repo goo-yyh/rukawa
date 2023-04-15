@@ -1,12 +1,32 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { getRukawa } from "../rukawa";
 import { INodeProps } from "../rukawa";
+import { debounce } from 'rxjs';
 
-export const useRukawa = ({ name, subscribes, initialValue }: INodeProps<unknown>) => {
+interface IOptions<T> {
+  debounce: number;
+  formatResult: (values: T) => unknown;
+}
+
+interface IChangeDetail<T> {
+  oldValues?: T;
+  currentValues: T
+}
+
+export const useRukawa = <U = unknown, T = unknown>(
+  { name, subscribes, initialValue }: INodeProps<U>,
+  { debounce, formatResult }: IOptions<T>
+) => {
   const rukawa = getRukawa();
   const nodeValues = rukawa.getNodeValues(subscribes || []);
   const [values, setValues] = useState(nodeValues);
-  const currentValues = useRef(nodeValues);
+  const valueDetail = useRef<IChangeDetail<T>>({
+    currentValues: nodeValues as T
+  });
+
+  const operators = useMemo(() => {
+
+  }, [debounce])
 
   useEffect(() => {
     const node = rukawa.createNode({
@@ -27,10 +47,19 @@ export const useRukawa = ({ name, subscribes, initialValue }: INodeProps<unknown
     const subscription = rukawa.stream.subscribe((val) => {
       const { name, value } = val;
       if (subscribes.includes(name)) {
-        setValues(values => ({
-          ...values,
-          [name]: value
-        }));
+        setValues(values => {
+          const newValues = {
+            ...values,
+            [name]: value
+          }
+
+          valueDetail.current = {
+            oldValues: values as T,
+            currentValues: newValues as T
+          }
+
+          return newValues;
+        });
       }
     })
     return () => {
@@ -41,6 +70,7 @@ export const useRukawa = ({ name, subscribes, initialValue }: INodeProps<unknown
 
   return {
     rukawaValues: values,
+    valuesDetail: valueDetail.current,
     setRukawaValue: (val: unknown) => {
       rukawa.rukawaMap[name].setValue(val)
     }
