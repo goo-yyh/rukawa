@@ -7,8 +7,9 @@ export interface INodeProps<T> {
 }
 
 class Rukawa {
+  valueBucket: Record<string, unknown> = {};
   rukawaMap: Record<string, RukawaNode<unknown>> = {};
-  stream: Subject<{ name: string; value: unknown }> = new Subject();
+  stream: Subject<Record<string, unknown>> = new Subject();
   createNode(data: INodeProps<unknown>) {
     const { name } = data;
     if (this.rukawaMap[name]) {
@@ -20,7 +21,15 @@ class Rukawa {
   }
 
   setNodeValue(data: { name: string, value: unknown }) {
-    this.stream.next(data);
+    this.valueBucket = {
+      ...this.valueBucket,
+      [data.name]: data.value
+    }
+
+    Promise.resolve()
+      .then(() => {
+        this.stream.next(this.valueBucket);
+      })
   }
 
   deleteNode(name: string) {

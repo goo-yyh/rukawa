@@ -1,4 +1,3 @@
-import { Subject } from "rxjs";
 import { INodeProps } from "../rukawa";
 
 let id = 0;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { getRukawa } from "../rukawa";
 import { INodeProps } from "../rukawa";
-import { debounce } from 'rxjs';
+import { debounceTime } from 'rxjs';
 
 interface IOptions<T> {
   debounce: number;
@@ -25,7 +25,12 @@ export const useRukawa = <U = unknown, T = unknown>(
   });
 
   const operators = useMemo(() => {
+    const pipe = [];
+    if (debounce) {
+      pipe.push(debounceTime(debounce));
+    }
 
+    return pipe;
   }, [debounce])
 
   useEffect(() => {
@@ -44,24 +49,38 @@ export const useRukawa = <U = unknown, T = unknown>(
       }
     }
 
-    const subscription = rukawa.stream.subscribe((val) => {
-      const { name, value } = val;
-      if (subscribes.includes(name)) {
-        setValues(values => {
-          const newValues = {
-            ...values,
-            [name]: value
+    // @ts-ignore
+    const subscription = rukawa
+      .stream
+      // @ts-ignore
+      .pipe(...[operators])
+      .subscribe((val) => {
+        const keys = Object.keys(val as Record<string, unknown>);
+        // values 中是否有订阅的 key
+        let valueChanged = false;
+        const changeValues = keys.reduce((cur, k) => {
+          if (subscribes.includes(k)) {
+            valueChanged = true;
+            cur[k] = changeValues[k]
           }
+          return cur;
+        }, {} as Record<string, unknown>)
+        if (valueChanged) {
+          setValues(values => {
+            const newValues = {
+              ...values,
+              ...changeValues
+            }
 
-          valueDetail.current = {
-            oldValues: values as T,
-            currentValues: newValues as T
-          }
+            valueDetail.current = {
+              oldValues: values as T,
+              currentValues: newValues as T
+            }
 
-          return newValues;
-        });
-      }
-    })
+            return newValues;
+          });
+        }
+      })
     return () => {
       rukawa.deleteNode(name);
       subscription.unsubscribe();
