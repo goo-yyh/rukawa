@@ -4,9 +4,11 @@ export interface INodeProps<T> {
   name: string;
   subscribes?: string[];
   initialValue?: T;
+  ignoreSameValue?: boolean;
 }
 
 class Rukawa {
+  showNextValue = false;
   valueBucket: Record<string, unknown> = {};
   rukawaMap: Record<string, RukawaNode<unknown>> = {};
   stream: Subject<Record<string, unknown>> = new Subject();
@@ -16,7 +18,7 @@ class Rukawa {
       throw new Error(`rukawa 中已存在 name 为 ${name} 的节点`);
     }
 
-    this.rukawaMap[name] = new RukawaNode<unknown>(data, this.setNodeValue);
+    this.rukawaMap[name] = new RukawaNode<unknown>(data, this.setNodeValue.bind(this));
     return this.rukawaMap[name];
   }
 
@@ -28,7 +30,17 @@ class Rukawa {
 
     Promise.resolve()
       .then(() => {
-        this.stream.next(this.valueBucket);
+        if (this.showNextValue) {
+          try {
+            console.log('rukawa next value: ' + JSON.stringify(this.valueBucket));
+          } catch (e) {
+            console.warn('next value cannot stringify');
+          }
+        }
+        this.stream.next({
+          ...this.valueBucket
+        });
+        this.valueBucket = {};
       })
   }
 
@@ -43,11 +55,28 @@ class Rukawa {
     names.forEach(name => {
       const node = this.rukawaMap[name];
       if (!node) {
+        values[name] = undefined;
         return;
       }
       values[name] = node.getValue()
     })
     return values;
+  }
+  getNodeValue(name: string) {
+    return this.rukawaMap[name]?.getValue();
+  }
+
+  getNode(name: string) {
+    return this.rukawaMap[name];
+  }
+  getAllNodes() {
+    return {
+      ...this.rukawaMap
+    }
+  }
+
+  showValue() {
+    this.showNextValue = true;
   }
 }
 

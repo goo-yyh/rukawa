@@ -5,6 +5,7 @@ export class RukawaNode<T = unknown> {
   _value: T | undefined;
   subscribes: string[];
   name: string;
+  ignoreSameValue = false;
   setRukawaValue: (data: { name: string, value: T }) => void;
   id: number;
   constructor(data: INodeProps<T>, setRukawaValue: (data: { name: string, value: T }) => void) {
@@ -16,6 +17,10 @@ export class RukawaNode<T = unknown> {
   }
 
   setValue(value: T) {
+    if (this.ignoreSameValue && this._value === value) {
+      return;
+    }
+
     this._value = value;
     this.setRukawaValue({
       name: this.name,
