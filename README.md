@@ -38,19 +38,19 @@ const {
 ### props
 
 | 参数   | 说明     | 类型     | 必填 |
-|------|--------|--------|----|
-| name | 节点名称   | `string` | 是  |
-| subscribes | 订阅节点名称 | `string[]` | 否  |
-| initialValue | 节点初始值  | `any`  | 否  |
+|------|--------|--------|---|
+| name | 节点名称   | `string` | 是 |
+| subscribes | 订阅节点名称 | `string[]` | 否 |
+| initialValue | 节点初始值  | `any`  | 否 |
+| broadcastOnMounted | 初次挂载是否广播value         | `boolean`         | 否 |
+| ignoreSameValue | 是否忽略相同的值              | `boolean`         | 否 |
+| valueState | 是否需要返回当前节点 value      | `boolean`         | 否 |
 
 ### options
 | 参数   | 说明                    | 类型                | 默认值     |
 |------|-----------------------|-------------------|---------|
 | debounce | 防抖                    | `number`          | -       |
 | formatResult | 对 `rukawaValue` 进行预处理 | `(values) => any` | -       |
-| broadcastOnMounted | 初次挂载是否广播value         | `boolean`         | `true`  |
-| ignoreSameValue | 是否忽略相同的值              | `boolean`         | `false` |
-| valueState | 是否需要返回当前节点 value      | `boolean`         | `false` |
 | pipes | rx pipes              | `OperatorFunction<any, any>[]`             | -       |
 
 ### return

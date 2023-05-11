@@ -1,16 +1,13 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { getRukawa } from "../rukawa";
 import { INodeProps } from "../rukawa";
-import { debounceTime, filter, map, OperatorFunction } from 'rxjs';
+import { debounceTime, filter, map, OperatorFunction, Subscription} from 'rxjs';
 
 interface IOptions<T> {
   debounce: number;
   formatResult: (values: T) => any;
   pipes: OperatorFunction<any, any>[];
-  broadcastOnMounted: boolean;
   filterInvalidValue: boolean;
-  ignoreSameValue: boolean;
-  valueState: boolean;
 }
 
 interface IChangeDetail<T> {
@@ -19,41 +16,49 @@ interface IChangeDetail<T> {
 }
 
 export const useRukawa = <U = unknown, T = Record<string, unknown>>(
-  { name, subscribes, initialValue }: INodeProps<U>,
+  { name, subscribes, initialValue, broadcastOnMounted = true, ignoreSameValue = false, valueState = false }: INodeProps<U>,
   options?: Partial<IOptions<T>>
 ) => {
+
   const {
     debounce,
     formatResult,
-    pipes,
-    broadcastOnMounted = true,
-    ignoreSameValue = false,
-    valueState = false
+    pipes
   } = options || {};
+
   const rukawa = getRukawa();
   const nodeValues = rukawa.getNodeValues(subscribes || []);
   const [value, setValue] = useState<any>(valueState ? initialValue : undefined);
   const [values, setValues] = useState(nodeValues);
+
+  const isMounted = useRef(false);
+
+  // subscription ref
+  const subscriptionRef = useRef<null | Subscription>(null);
+
   // new values && old values
   const valueDetail = useRef<IChangeDetail<T>>({
     currentValues: nodeValues as T
   });
 
-  // 处理无关数据
-  const transformValues = useCallback((values: Record<string, unknown>) => {
-    const keys = Object.keys(values);
-    return keys.reduce((cur, k) => {
-      if (subscribes!.includes(k)) {
-        cur[k] = values[k]
-      }
-      return cur;
-    }, {} as Record<string, unknown>)
-  }, [subscribes])
-
+  // subscribes change, update stream
   // rx pipe
   const operators = useMemo(() => {
+    if (!subscribes?.length) {
+      return [];
+    }
+
     let pipe = [
-      map(transformValues),
+      // 清除无关数据
+      map((values: Record<string, unknown>) => {
+        const keys = Object.keys(values);
+        return keys.reduce((cur, k) => {
+          if (subscribes!.includes(k)) {
+            cur[k] = values[k]
+          }
+          return cur;
+        }, {} as Record<string, unknown>)
+      }),
       filter((values: Record<string, unknown>) => !!Object.keys(values).length)
     ];
     if (debounce) {
@@ -68,32 +73,20 @@ export const useRukawa = <U = unknown, T = Record<string, unknown>>(
     }
 
     return pipe;
-  }, [debounce, transformValues, pipes])
+  }, [subscribes?.join(''), debounce, pipes])
 
+  // resubscribe stream
   useEffect(() => {
-    const node = rukawa.createNode({
-      name,
-      subscribes,
-      initialValue,
-      ignoreSameValue
-    })
-    if (initialValue !== undefined && broadcastOnMounted) {
-      node.setValue(initialValue);
-    }
-    // 无订阅
-    if (!subscribes?.length) {
-      return () => {
-        rukawa.deleteNode(name);
-      }
+    if (operators.length === 0) {
+      return () => {}
     }
 
-    // @ts-ignore
-    const subscription = rukawa
+    subscriptionRef.current = rukawa
       .stream
       // @ts-ignore
       .pipe(...operators)
       .subscribe((val) => {
-        setValues(values => {
+        setValues((values: T) => {
           const newValues = {
             ...values,
             ...(val as Record<string, unknown>)
@@ -107,21 +100,55 @@ export const useRukawa = <U = unknown, T = Record<string, unknown>>(
           return newValues;
         });
       })
+
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe()
+      }
+    }
+  }, [operators])
+
+  // name change, recreate node
+  useEffect(() => {
+    const node = rukawa.createNode({
+      name,
+      subscribes,
+      initialValue,
+      ignoreSameValue,
+      broadcastOnMounted
+    })
+
     return () => {
       rukawa.deleteNode(name);
-      subscription.unsubscribe();
     }
   }, [name]);
 
+  // change subscribes values when update
+  useEffect(() => {
+    if (isMounted.current) {
+      const nodeValues = rukawa.getNodeValues(subscribes || []);
+      setValues(nodeValues);
+      rukawa.rukawaMap[name]?.updateNode({
+        key: 'subscribes',
+        value: subscribes
+      })
+    }
+  }, [subscribes?.join('')])
+  useEffect(() => {
+    isMounted.current = true;
+  }, [])
+
+  // output values
   const rukawaValues = useMemo(() => {
     if (formatResult) {
       return formatResult({
         ...values
-      } as T);
+      });
     }
     return values;
   }, [formatResult, values])
 
+  // tap stream
   const setRukawaValue = useCallback((val: unknown) => {
     if (valueState) {
       setValue(val);

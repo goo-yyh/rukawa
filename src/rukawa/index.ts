@@ -5,6 +5,8 @@ export interface INodeProps<T> {
   subscribes?: string[];
   initialValue?: T;
   ignoreSameValue?: boolean;
+  broadcastOnMounted?: boolean;
+  valueState?: boolean;
 }
 
 class Rukawa {
